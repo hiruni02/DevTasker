@@ -10,11 +10,11 @@ app.use(express.json())
 
 // Database connection
 const pool = new Pool({
-  host: 'localhost',
-  port: 5432,
-  user: 'admin',
-  password: 'password123',
-  database: 'taskmanager'
+  host: process.env.DB_HOST || 'localhost',
+  port: process.env.DB_PORT || 5432,
+  user: process.env.DB_USER || 'admin',
+  password: process.env.DB_PASSWORD || 'password123',
+  database: process.env.DB_NAME || 'taskmanager'
 })
 
 // Create tasks table if it doesn't exist

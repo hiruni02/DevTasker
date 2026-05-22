@@ -1,121 +1,97 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useState, useEffect } from "react"
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000"
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [tasks, setTasks] = useState([])
+  const [title, setTitle] = useState("")
+
+  // Fetch all tasks when page loads
+  useEffect(() => {
+    fetchTasks()
+  }, [])
+
+  const fetchTasks = async () => {
+    const res = await fetch("${API_URL}/tasks")
+    const data = await res.json()
+    setTasks(data)
+  }
+
+  // Create a new task
+  const createTask = async () => {
+    if (!title.trim()) return
+    await fetch("${API_URL}/tasks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title })
+    })
+    setTitle("")
+    fetchTasks()
+  }
+
+  // Toggle task complete
+  const toggleTask = async (id) => {
+    await fetch(`${API_URL}/tasks/${id}`, {
+      method: "PATCH"
+    })
+    fetchTasks()
+  }
+
+  // Delete a task
+  const deleteTask = async (id) => {
+    await fetch(`${API_URL}/tasks/${id}`, {
+      method: "DELETE"
+    })
+    fetchTasks()
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
+    <div style={{ maxWidth: "600px", margin: "40px auto", padding: "20px", fontFamily: "Arial" }}>
+      <h1>Task Manager 📝</h1>
+
+      {/* Add task input */}
+      <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
+        <input
+          type="text"
+          placeholder="Enter a new task..."
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && createTask()}
+          style={{ flex: 1, padding: "10px", fontSize: "16px", borderRadius: "6px", border: "1px solid #ccc" }}
+        />
         <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
+          onClick={createTask}
+          style={{ padding: "10px 20px", backgroundColor: "#4CAF50", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "16px" }}
         >
-          Count is {count}
+          Add
         </button>
-      </section>
+      </div>
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+      {/* Task list */}
+      {tasks.length === 0 ? (
+        <p style={{ color: "#888" }}>No tasks yet. Add one above!</p>
+      ) : (
+        tasks.map(task => (
+          <div key={task.id} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "12px", marginBottom: "8px", backgroundColor: "#f9f9f9", borderRadius: "8px", border: "1px solid #eee" }}>
+            <input
+              type="checkbox"
+              checked={task.done}
+              onChange={() => toggleTask(task.id)}
+              style={{ width: "18px", height: "18px", cursor: "pointer" }}
+            />
+            <span style={{ flex: 1, fontSize: "16px", textDecoration: task.done ? "line-through" : "none", color: task.done ? "#888" : "#333" }}>
+              {task.title}
+            </span>
+            <button
+              onClick={() => deleteTask(task.id)}
+              style={{ padding: "6px 12px", backgroundColor: "#f44336", color: "white", border: "none", borderRadius: "6px", cursor: "pointer" }}
+            >
+              Delete
+            </button>
+          </div>
+        ))
+      )}
+    </div>
   )
 }
 
