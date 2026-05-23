@@ -44,5 +44,5 @@ jobs:
 
       - name: Health check backend
         run: |
-          sleep 10
+          sleep 30
           curl http://localhost:3000
